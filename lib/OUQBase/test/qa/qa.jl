@@ -3,9 +3,6 @@ using SciMLTesting, OUQBase, JET, Test
 run_qa(
     OUQBase;
     explicit_imports = true,
-    # piracies: OUQBase defines `CanonicalMoments.RawMomentSequence(::Symbolics.Num, ...)`,
-    # owning neither the type nor the arg types; resolving it is a design change.
-    aqua_broken = (:piracies,),  # SciML/OptimalUncertaintyQuantification.jl#33
     ei_kwargs = (;
         # Explicit imports of names that are non-public in the upstream majors OUQBase
         # actually resolves. OUQBase's [compat] caps SciMLBase 2.x / Symbolics 6.x /
