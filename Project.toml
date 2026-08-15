@@ -23,7 +23,7 @@ Pkg = "1.10"
 Reexport = "1.2.2"
 SafeTestsets = "0.1"
 Test = "1.10"
-SciMLTesting = "1"
+SciMLTesting = "2"
 
 [extras]
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
