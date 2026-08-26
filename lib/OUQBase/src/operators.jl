@@ -1,14 +1,20 @@
 import Symbolics: Operator, value
-import SymbolicUtils: Term, symtype
+import SymbolicUtils: symtype, term
 
 struct 𝔼_ <: Operator end
 
 const 𝔼 = 𝔼_() # To get same object
 
-(::𝔼_)(x) = Term{symtype(x)}(𝔼, Any[x])
+# `term` (rather than constructing `Term{T}` directly) picks the SymVariant
+# type parameter itself and infers the symbolic type via `promote_symtype`.
+(::𝔼_)(x) = term(𝔼, x)
 (::𝔼_)(x::Num) = Num(𝔼(value(x)))
 
 SymbolicUtils.promote_symtype(::𝔼_, x) = x
+# Disambiguates against SymbolicUtils's generic `promote_symtype(::Operator,
+# ::Type{T}) where T`, which is equally specific to the untyped method above
+# when called with a `Type` argument (e.g. `symtype(x) === Real`).
+SymbolicUtils.promote_symtype(::𝔼_, ::Type{T}) where {T} = T
 Base.nameof(::𝔼_) = :𝔼
 SymbolicUtils.isbinop(::𝔼_) = false
 
@@ -28,10 +34,11 @@ struct ℙ_ <: Operator end
 
 const ℙ = ℙ_() # To get same object
 
-(::ℙ_)(x) = Term{symtype(x)}(ℙ, Any[x])
+(::ℙ_)(x) = term(ℙ, x)
 (::ℙ_)(x::Num) = Num(ℙ(value(x)))
 
 SymbolicUtils.promote_symtype(::ℙ_, x) = x
+SymbolicUtils.promote_symtype(::ℙ_, ::Type{T}) where {T} = T
 Base.nameof(::ℙ_) = :ℙ
 SymbolicUtils.isbinop(::ℙ_) = false
 

@@ -203,6 +203,18 @@ function get_group_name(var, ouq_sys::OUQSystem)
     return get_group_name(var, ouq_sys.admissible_set)
 end
 
+# `𝔼`/`ℙ` are modeled as `Symbolics.Operator`s (the same abstraction used for
+# e.g. `Differential`). `SymbolicUtils.default_is_atomic` therefore treats any
+# `𝔼(Q)`/`ℙ(Q)` application as an atomic leaf (correct for `D(x)`, but not for
+# us): we need to recurse through it to discover the underlying random
+# variable `Q` that it wraps.
+function _random_variable_is_atomic(ex)
+    if SymbolicUtils.iscall(ex) && SymbolicUtils.operation(ex) isa Operator
+        return false
+    end
+    return SymbolicUtils.default_is_atomic(ex)
+end
+
 function get_ordered_group_names(
         expression,
         admissible_set::AdmissibleSet;
@@ -210,11 +222,11 @@ function get_ordered_group_names(
         ensure_all = false,
     )
     if ensure_singleton
-        vars = get_variables(expression)
+        vars = get_variables(expression; is_atomic = _random_variable_is_atomic)
         @assert length(vars) == 1 "Expression $expression has multiple random variables $vars. Disable `ensure_singleton` if this is intended."
         return unique([get_group_name(only(vars), admissible_set)])
     else
-        vars = get_variables(expression)
+        vars = get_variables(expression; is_atomic = _random_variable_is_atomic)
         @debug "Expression $expression has multiple random variables $vars"
         unordered_group_names = Set([get_group_name(var, admissible_set) for var in vars])
         if ensure_all
