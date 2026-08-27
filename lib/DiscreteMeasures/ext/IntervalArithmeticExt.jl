@@ -4,7 +4,7 @@ using DiscreteMeasures, IntervalArithmetic
 
 println("Load Ext")
 function DiscreteMeasures.clamp_domain(x::Interval, lb, ub)
-    bounds = Interval(lb, ub)
+    bounds = interval(lb, ub)
     return intersect(x, bounds)
 end
 
