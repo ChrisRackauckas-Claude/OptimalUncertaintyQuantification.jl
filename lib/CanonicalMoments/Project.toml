@@ -43,7 +43,7 @@ SciMLPublic = "1"
 SpecialFunctions = "2"
 StaticArrays = "1"
 Statistics = "1.10"
-Symbolics = "7.30"
+Symbolics = "7.37"
 Test = "1.10"
 
 [sources]
