@@ -91,11 +91,11 @@ end
     end
 
     @testset "Interval Ext" begin
-        @test clamp_domain(Interval(-2, -1), 0, 2) == ∅
-        @test clamp_domain(Interval(-2, 1), 0, 2) == Interval(0, 1)
-        @test clamp_domain(Interval(0.1, 0.5), 0, 2) == Interval(0.1, 0.5)
-        @test clamp_domain(Interval(0.5, 5), 0, 2) == Interval(0.5, 2)
-        @test clamp_domain(Interval(3, 4), 0, 2) == ∅
+        @test clamp_domain(interval(-2, -1), 0, 2) == emptyinterval()
+        @test clamp_domain(interval(-2, 1), 0, 2) == interval(0, 1)
+        @test clamp_domain(interval(0.1, 0.5), 0, 2) == interval(0.1, 0.5)
+        @test clamp_domain(interval(0.5, 5), 0, 2) == interval(0.5, 2)
+        @test clamp_domain(interval(3, 4), 0, 2) == emptyinterval()
     end
 
 end
