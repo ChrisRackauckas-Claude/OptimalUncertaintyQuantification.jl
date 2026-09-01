@@ -1,7 +1,7 @@
-import Symbolics: Operator, value
-import SymbolicUtils: symtype, term
+import Symbolics: value
+import SymbolicUtils: term
 
-struct 𝔼_ <: Operator end
+struct 𝔼_ end
 
 const 𝔼 = 𝔼_() # To get same object
 
@@ -30,7 +30,7 @@ struct ℙ <: Operator
 end
 =#
 
-struct ℙ_ <: Operator end
+struct ℙ_ end
 
 const ℙ = ℙ_() # To get same object
 

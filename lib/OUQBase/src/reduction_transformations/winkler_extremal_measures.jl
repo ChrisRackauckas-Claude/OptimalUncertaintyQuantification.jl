@@ -5,9 +5,9 @@ function convert_inequality_to_jump_leq_lhs(
         complement = false,
         tol = 1.0e-10,
     )
-    if ineq.relational_op == Symbolics.leq
+    if ineq.relational_op == _LEQ_RELATIONAL_OPERATOR
         jump_leq_lhs = complement ? ineq.rhs - ineq.lhs + tol : ineq.lhs - ineq.rhs
-    elseif ineq.relational_op == Symbolics.geq
+    elseif ineq.relational_op == _GEQ_RELATIONAL_OPERATOR
         jump_leq_lhs = complement ? ineq.lhs - ineq.rhs - tol : ineq.rhs - ineq.lhs
     else
         error("Unsupported inequality: $ineq")
@@ -386,10 +386,9 @@ function construct_optimization_problem(
         ensure_all = true,
     )
 
-    ## In the exact case, we are using the Symbolic.evaluate function
     # TODO: Dispatch on Probability Function approximation here.
     reduced_objective = expectation(
-        (single_support) -> Symbolics.evaluate(
+        (single_support) -> _evaluate_condition(
             condition,
             Dict(constituent_random_variables .=> single_support),
         ),

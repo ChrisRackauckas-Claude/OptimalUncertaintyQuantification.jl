@@ -18,13 +18,12 @@ run_qa(
         # Non-public qualified accesses into upstream packages; still non-public in the
         # resolved upstream majors:
         #   :BasicSymbolic/:isbinop/:promote_symtype - SymbolicUtils
-        #   :evaluate/:geq/:leq                      - Symbolics
         #   :getdefault                              - ModelingToolkit
         #   :NoAD/:NullParameters                    - SciMLBase
         all_qualified_accesses_are_public = (;
             ignore = (
-                :BasicSymbolic, :NoAD, :NullParameters, :evaluate, :geq, :getdefault,
-                :isbinop, :leq, :promote_symtype,
+                :BasicSymbolic, :NoAD, :NullParameters, :getdefault, :isbinop,
+                :promote_symtype,
             ),
         ),
     ),
