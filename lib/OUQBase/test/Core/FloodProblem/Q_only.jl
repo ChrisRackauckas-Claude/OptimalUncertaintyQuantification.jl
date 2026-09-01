@@ -1,5 +1,6 @@
 using Symbolics, ModelingToolkit
 using OUQBase
+using CanonicalMoments: moments
 using Test
 using OptimizationBBO
 
@@ -7,6 +8,10 @@ using OptimizationBBO
 rand_vars = @random_variables begin
     Independent(Q, bounds = (160.0, 3580.0))
 end
+@test OUQBase._evaluate_condition(Q ≲ 160.0, Dict(Q => 160.0))
+@test OUQBase._evaluate_condition(Q ≳ 160.0, Dict(Q => 160.0))
+@test !OUQBase._evaluate_condition(Q ≲ 160.0, Dict(Q => 161.0))
+@test !OUQBase._evaluate_condition(Q ≳ 160.0, Dict(Q => 159.0))
 
 constraints = [𝔼(Q) ~ 1320.42]
 
@@ -41,6 +46,17 @@ ouq_sys_expectation_canonical_moments = OUQSystem(;
     reduction_alg = StengerCanonicalMoments(),
     parameters = pars,
 )
+@test Symbolics.value.(
+    moments(
+        only(
+            values(
+                raw_moments_map(
+                    ouq_sys_expectation_canonical_moments,
+                )
+            )
+        )
+    )
+) == [1320.42]
 ouq_sys_expectation_canonical_moments_analytic = OUQSystem(;
     objective = objective_expectation,
     admissible_set,

@@ -1,7 +1,7 @@
 module OUQBase
 using ModelingToolkit: ModelingToolkit, @named, OptimizationSystem, get_variables,
     getbounds, parameters, structural_simplify, unknowns
-using Symbolics: Symbolics, Equation, Inequality, Num, wrap
+using Symbolics: Symbolics, Equation, Inequality, Num, wrap, ≲, ≳
 using SymbolicUtils: SymbolicUtils, BasicSymbolic, @rule, substitute
 using SymbolicUtils.Rewriters: Chain
 using TermInterface: arguments
@@ -15,6 +15,9 @@ using JuMP: JuMP, @constraint, @objective, @variable, set_lower_bound, set_name,
     set_upper_bound
 using SciMLBase: SciMLBase, OptimizationFunction, OptimizationProblem
 using ADTypes: AbstractADType
+
+const _LEQ_RELATIONAL_OPERATOR = (0 ≲ 0).relational_op
+const _GEQ_RELATIONAL_OPERATOR = (0 ≳ 0).relational_op
 
 using CanonicalMoments: CanonicalMoments, DiscreteMeasureTransform1
 import CanonicalMoments: RawMomentSequence

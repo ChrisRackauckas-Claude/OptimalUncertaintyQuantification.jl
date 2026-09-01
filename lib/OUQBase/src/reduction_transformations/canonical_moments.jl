@@ -6,7 +6,7 @@ function get_raw_moment_order(equation::Union{Equation, Inequality}, random_var:
     if Symbolics.wrap(_eq.lhs) === random_var
         return 1
     end
-    order = _eq.lhs
+    order = Symbolics.value(_eq.lhs)
     if !isa(order, Int64)
         error(
             "Equation $(equation) is not a raw moment equation of the form: 𝔼(Q^n) ~ <Float64> where n is an Integer",
@@ -21,8 +21,9 @@ function build_raw_moment_sequence(
     )
     num_group_cons = length(constraints)
     raw_moment_sequence = fill(NaN, num_group_cons)
-    for (i, constraint) in enumerate(constraints)
-        raw_moment_sequence[get_raw_moment_order(constraint, random_var)] = constraint.rhs
+    for constraint in constraints
+        moment_order = get_raw_moment_order(constraint, random_var)
+        raw_moment_sequence[moment_order] = Symbolics.value(constraint.rhs)
     end
     !any(isnan, raw_moment_sequence) || error("Raw moments have holes")
     lb, ub = getbounds(random_var)
@@ -39,6 +40,17 @@ function create_raw_moments_map(admissible_set::AbstractAdmissibleSet)
         raw_moments_map[k] = build_raw_moment_sequence(random_var, v)
     end
     return raw_moments_map
+end
+
+function _evaluate_condition(condition::Inequality, substitutions)
+    lhs = Symbolics.value(substitute(condition.lhs, substitutions; fold = Val(true)))
+    rhs = Symbolics.value(substitute(condition.rhs, substitutions; fold = Val(true)))
+    if condition.relational_op == _LEQ_RELATIONAL_OPERATOR
+        return lhs <= rhs
+    elseif condition.relational_op == _GEQ_RELATIONAL_OPERATOR
+        return lhs >= rhs
+    end
+    throw(ArgumentError("Unsupported inequality: $condition"))
 end
 
 # This creates the optimization decision variables for the canonical moment problem.
@@ -250,7 +262,7 @@ function construct_optimization_problem(
     if isa(ouq_sys.objective, ProbabilityObjective)
         # TODO: Dispatch on Probability Function approximation here.
         ouq_obj_f =
-            (rand_var_vec) -> Symbolics.evaluate(
+            (rand_var_vec) -> _evaluate_condition(
             condition,
             Dict(constituent_random_variables .=> rand_var_vec),
         )
