@@ -21,6 +21,7 @@ function activate_qa_env()
 end
 
 if TEST_GROUP == "Core" || TEST_GROUP == "All"
+    @safetestset "promote_symtype operators" include("Core/operators_promote_symtype.jl")
     @safetestset "Flood Problem (Q only)" include("Core/FloodProblem/Q_only.jl")
 
     # The flood-problem fixtures push every OUQSystem into Main-scoped problem
