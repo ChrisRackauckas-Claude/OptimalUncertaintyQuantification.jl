@@ -1,7 +1,7 @@
 function get_raw_moment_order(equation::Union{Equation, Inequality}, random_var::Num)
-    # Prefer TermInterface over SymbolicUtils rewrite rules: modern Symbolics
-    # stores powers/Consts in a shape the old `@rule 𝔼(~f) => …` chain no longer
-    # reduces to a plain Int.
+    # 𝔼(Q) / 𝔼(Q^n) ~ c: read order from the TermInterface structure of the LHS
+    # (plain variable ⇒ 1; power ⇒ integer exponent). Const-wrapped numerics are
+    # unwrapped via Symbolics.value.
     lhs = Symbolics.value(equation.lhs)
     iscall(lhs) && operation(lhs) isa 𝔼_ || error(
         "Equation $(equation) is not a raw moment equation of the form: 𝔼(Q^n) ~ <Float64> where n is an Integer",
@@ -30,7 +30,7 @@ function build_raw_moment_sequence(
     num_group_cons = length(constraints)
     raw_moment_sequence = fill(NaN, num_group_cons)
     for (i, constraint) in enumerate(constraints)
-        # Modern Symbolics stores numeric RHS as Const symbolics; unwrap to Float64.
+        # Numeric RHS may be a Const symbolic; coerce to Float64 for the sequence.
         rhs = Symbolics.value(constraint.rhs)
         raw_moment_sequence[get_raw_moment_order(constraint, random_var)] = Float64(rhs)
     end

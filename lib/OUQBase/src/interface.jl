@@ -204,9 +204,9 @@ function get_group_name(var, ouq_sys::OUQSystem)
 end
 
 # Symbolics treats Operator applications as variable leaves, so
-# `get_variables(𝔼(Q) ~ c)` yields `{𝔼(Q)}` rather than `{Q}`. Descend into
-# OUQ expectation/probability operators and collect variables from their args
-# (including through powers like 𝔼(Q^2)).
+# `get_variables(𝔼(Q) ~ c)` / `get_variables(ℙ(Q ≳ c))` yield the operator
+# term itself. Descend into 𝔼/ℙ arguments — including Inequality/Equation
+# wrappers used by ≳/≲ — and collect the underlying random variables.
 function underlying_random_variables(expression)
     vars = Any[]
     for v in get_variables(expression)
@@ -217,19 +217,27 @@ end
 
 function _unwrap_ouq_vars(v)
     v = Symbolics.value(v)
-    if iscall(v)
+    if v isa Number
+        return Any[]
+    elseif v isa Union{Equation, Inequality}
+        return unique(vcat(_unwrap_ouq_vars(v.lhs), _unwrap_ouq_vars(v.rhs)))
+    elseif iscall(v)
         op = operation(v)
         if op isa 𝔼_ || op isa ℙ_
             result = Any[]
             for arg in arguments(v)
-                for inner in get_variables(arg)
-                    append!(result, _unwrap_ouq_vars(inner))
-                end
+                append!(result, _unwrap_ouq_vars(arg))
             end
-            return result
+            return unique(result)
         end
+        result = Any[]
+        for inner in get_variables(v)
+            append!(result, _unwrap_ouq_vars(inner))
+        end
+        return unique(isempty(result) ? Any[v] : result)
+    else
+        return Any[v]
     end
-    return Any[v]
 end
 
 function get_ordered_group_names(

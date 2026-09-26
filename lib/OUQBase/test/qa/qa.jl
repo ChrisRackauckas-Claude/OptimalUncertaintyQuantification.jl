@@ -10,8 +10,8 @@ run_qa(
         # (the public declarations only landed in later majors that [compat] excludes;
         # verified against the registered releases on Julia 1.12: Symbolics 6.58.0 /
         # SymbolicUtils 3.32.0).
-        #   :BasicSymbolic/:Term/:symtype - SymbolicUtils
-        #   :Operator/:value              - Symbolics
+        #   :BasicSymbolic/:Operator/:Term/:symtype - SymbolicUtils
+        #   :value                                  - Symbolics
         all_explicit_imports_are_public = (;
             ignore = (:BasicSymbolic, :Operator, :Term, :symtype, :value),
         ),
@@ -19,7 +19,8 @@ run_qa(
         # resolved upstream majors:
         #   :BasicSymbolic/:isbinop/:promote_symtype - SymbolicUtils
         #   :evaluate/:geq/:leq                      - Symbolics
-        #   :getdefault                              - ModelingToolkit
+        #   :getdefault                              - ModelingToolkit (owner may be
+        #     ModelingToolkitBase on newer stacks; keep the MT-qualified access)
         #   :NoAD/:NullParameters                    - SciMLBase
         all_qualified_accesses_are_public = (;
             ignore = (
@@ -27,5 +28,6 @@ run_qa(
                 :isbinop, :leq, :promote_symtype,
             ),
         ),
+        all_qualified_accesses_via_owners = (; ignore = (:getdefault,)),
     ),
 )
