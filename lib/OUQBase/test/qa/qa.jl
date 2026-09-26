@@ -35,8 +35,4 @@ run_qa(
         ),
     ),
     reexports_allow = CANONICAL_MOMENTS_REEXPORTS,
-    # Pre-existing `promote_symtype(::𝔼_/ℙ_, ::Type)` vs SymbolicUtils.Operator
-    # ambiguity; tracked and being fixed under SciML/OptimalUncertaintyQuantification.jl#54.
-    # Do not "fix" the operator methods in this QA-docs PR.
-    aqua_broken = (:ambiguities,),
 )
