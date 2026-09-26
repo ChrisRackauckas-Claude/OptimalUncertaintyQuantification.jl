@@ -134,8 +134,8 @@ algorithms.
 
 Keyword maps are populated during [`OUQSystem`](@ref) construction when this type
 is passed as `reduction_alg`. `support_alg` / `weight_alg` select how nodes and
-weights are computed (default: eigenvalue / eigenvector Golub–Welsch style;
-analytic polynomial options are also available).
+weights are computed (defaults: [`EigvalSupportAlg`](@ref) /
+[`EigvecWeightAlg`](@ref); polynomial-based options are also available).
 """
 struct StengerCanonicalMoments <: AbstractReductionAlgorithm
     constraints_map::OrderedDict{Symbol, Vector{Union{Equation, Inequality}}}
