@@ -1,14 +1,15 @@
 import Symbolics: Operator, value
-import SymbolicUtils: Term, symtype
+import SymbolicUtils: term
 
 struct 𝔼_ <: Operator end
 
 const 𝔼 = 𝔼_() # To get same object
 
-(::𝔼_)(x) = Term{symtype(x)}(𝔼, Any[x])
+(::𝔼_)(x) = term(𝔼, x)
 (::𝔼_)(x::Num) = Num(𝔼(value(x)))
 
 SymbolicUtils.promote_symtype(::𝔼_, x) = x
+SymbolicUtils.promote_symtype(::𝔼_, ::Type{T}) where {T} = T
 Base.nameof(::𝔼_) = :𝔼
 SymbolicUtils.isbinop(::𝔼_) = false
 
@@ -28,10 +29,11 @@ struct ℙ_ <: Operator end
 
 const ℙ = ℙ_() # To get same object
 
-(::ℙ_)(x) = Term{symtype(x)}(ℙ, Any[x])
+(::ℙ_)(x) = term(ℙ, x)
 (::ℙ_)(x::Num) = Num(ℙ(value(x)))
 
 SymbolicUtils.promote_symtype(::ℙ_, x) = x
+SymbolicUtils.promote_symtype(::ℙ_, ::Type{T}) where {T} = T
 Base.nameof(::ℙ_) = :ℙ
 SymbolicUtils.isbinop(::ℙ_) = false
 
@@ -40,7 +42,7 @@ SymbolicUtils.isbinop(::ℙ_) = false
 
 const 𝟙 = 𝟙_() # To get same object
 
-(::𝟙_)(x) = Term{symtype(x)}(𝟙, Any[x])
+(::𝟙_)(x) = term(𝟙, x)
 (::𝟙_)(x::Num) = Num(𝟙(value(x)))
 
 SymbolicUtils.promote_symtype(::𝟙_, x) = x
