@@ -1,4 +1,6 @@
 using SciMLTesting, OptimalUncertaintyQuantification, JET, Test
+# `@random_variables` expands to `Symbolics.@variables` in the caller module.
+import Symbolics
 
 # Intentional umbrella reexports: `using OptimalUncertaintyQuantification` is
 # meant to surface the OUQBase API (and the CanonicalMoments algorithms OUQBase
