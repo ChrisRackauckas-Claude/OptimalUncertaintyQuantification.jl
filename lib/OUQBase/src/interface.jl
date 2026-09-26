@@ -203,6 +203,35 @@ function get_group_name(var, ouq_sys::OUQSystem)
     return get_group_name(var, ouq_sys.admissible_set)
 end
 
+# Symbolics treats Operator applications as variable leaves, so
+# `get_variables(𝔼(Q) ~ c)` yields `{𝔼(Q)}` rather than `{Q}`. Descend into
+# OUQ expectation/probability operators and collect variables from their args
+# (including through powers like 𝔼(Q^2)).
+function underlying_random_variables(expression)
+    vars = Any[]
+    for v in get_variables(expression)
+        append!(vars, _unwrap_ouq_vars(v))
+    end
+    return unique(vars)
+end
+
+function _unwrap_ouq_vars(v)
+    v = Symbolics.value(v)
+    if iscall(v)
+        op = operation(v)
+        if op isa 𝔼_ || op isa ℙ_
+            result = Any[]
+            for arg in arguments(v)
+                for inner in get_variables(arg)
+                    append!(result, _unwrap_ouq_vars(inner))
+                end
+            end
+            return result
+        end
+    end
+    return Any[v]
+end
+
 function get_ordered_group_names(
         expression,
         admissible_set::AdmissibleSet;
@@ -210,11 +239,11 @@ function get_ordered_group_names(
         ensure_all = false,
     )
     if ensure_singleton
-        vars = get_variables(expression)
+        vars = underlying_random_variables(expression)
         @assert length(vars) == 1 "Expression $expression has multiple random variables $vars. Disable `ensure_singleton` if this is intended."
         return unique([get_group_name(only(vars), admissible_set)])
     else
-        vars = get_variables(expression)
+        vars = underlying_random_variables(expression)
         @debug "Expression $expression has multiple random variables $vars"
         unordered_group_names = Set([get_group_name(var, admissible_set) for var in vars])
         if ensure_all
