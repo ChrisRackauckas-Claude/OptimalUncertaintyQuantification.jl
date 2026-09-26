@@ -1,6 +1,7 @@
 module IntervalArithmeticExt
 
-using DiscreteMeasures, IntervalArithmetic
+using DiscreteMeasures: DiscreteMeasures, clamp_domain
+using IntervalArithmetic: IntervalArithmetic, Interval, interval, intersect_interval
 
 println("Load Ext")
 function DiscreteMeasures.clamp_domain(x::Interval, lb, ub)
