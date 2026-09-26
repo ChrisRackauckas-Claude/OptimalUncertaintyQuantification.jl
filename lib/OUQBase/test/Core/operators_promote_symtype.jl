@@ -24,6 +24,16 @@ end
     )
     @test OUQBase.get_raw_moment_order(𝔼(Q) ~ 1.0, Q) == 1
     @test OUQBase.get_raw_moment_order(𝔼(Q^2) ~ 1.0, Q) == 2
+    # Non-integer / symbolic exponents must get the descriptive raw-moment error,
+    # not InexactError / MethodError from a bare Int(...).
+    err = try
+        OUQBase.get_raw_moment_order(𝔼(Q^2.5) ~ 1.0, Q)
+        nothing
+    catch e
+        e
+    end
+    @test err isa ErrorException
+    @test occursin("not a raw moment equation", sprint(showerror, err))
 end
 
 # Flood fixtures use ≳/≲ inequalities inside ℙ(...). Those wrap as Inequality

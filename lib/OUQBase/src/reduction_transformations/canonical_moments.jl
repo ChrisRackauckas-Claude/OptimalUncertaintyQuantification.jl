@@ -16,7 +16,11 @@ function get_raw_moment_order(equation::Union{Equation, Inequality}, random_var:
         isequal(base, rv) || error(
             "Equation $(equation) is not a raw moment equation of the form: 𝔼(Q^n) ~ <Float64> where n is an Integer",
         )
-        return Int(Symbolics.value(exp))
+        n = Symbolics.value(exp)
+        (n isa Number && isinteger(n)) || error(
+            "Equation $(equation) is not a raw moment equation of the form: 𝔼(Q^n) ~ <Float64> where n is an Integer",
+        )
+        return Int(n)
     end
     return error(
         "Equation $(equation) is not a raw moment equation of the form: 𝔼(Q^n) ~ <Float64> where n is an Integer",
