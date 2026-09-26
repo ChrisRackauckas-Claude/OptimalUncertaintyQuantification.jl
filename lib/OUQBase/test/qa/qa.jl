@@ -1,5 +1,14 @@
 using SciMLTesting, OUQBase, JET, Test
 
+# CanonicalMoments algorithms reexported so OUQBase users need not depend on
+# CanonicalMoments directly; documented at CanonicalMoments.
+const CANONICAL_MOMENTS_REEXPORTS = (
+    :EigvalSupportAlg,
+    :EigvecWeightAlg,
+    :PolyRootsSupportAlg,
+    :PolyWeightAlg,
+)
+
 run_qa(
     OUQBase;
     explicit_imports = true,
@@ -28,4 +37,5 @@ run_qa(
             ),
         ),
     ),
+    reexports_allow = CANONICAL_MOMENTS_REEXPORTS,
 )
