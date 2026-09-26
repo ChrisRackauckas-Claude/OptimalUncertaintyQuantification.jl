@@ -19,15 +19,13 @@ run_qa(
         # resolved upstream majors:
         #   :BasicSymbolic/:isbinop/:promote_symtype - SymbolicUtils
         #   :evaluate/:geq/:leq                      - Symbolics
-        #   :getdefault                              - ModelingToolkit (owner may be
-        #     ModelingToolkitBase on newer stacks; keep the MT-qualified access)
         #   :NoAD/:NullParameters                    - SciMLBase
+        # getdefault is accessed via its owner ModelingToolkitBase (public there).
         all_qualified_accesses_are_public = (;
             ignore = (
-                :BasicSymbolic, :NoAD, :NullParameters, :evaluate, :geq, :getdefault,
+                :BasicSymbolic, :NoAD, :NullParameters, :evaluate, :geq,
                 :isbinop, :leq, :promote_symtype,
             ),
         ),
-        all_qualified_accesses_via_owners = (; ignore = (:getdefault,)),
     ),
 )

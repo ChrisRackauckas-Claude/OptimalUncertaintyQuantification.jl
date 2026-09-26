@@ -148,7 +148,7 @@ function construct_optimization_problem(
         OptimizationSystem(reduced_objective, p_frees_vec, ouq_sys.parameters; kwargs...)
     sys = structural_simplify(opt_sys)
     u0_map = map(
-        v -> 0.5 * (ModelingToolkit.getbounds(v)[1] .+ ModelingToolkit.getbounds(v)[2]),
+        v -> 0.5 * (ModelingToolkitBase.getbounds(v)[1] .+ ModelingToolkitBase.getbounds(v)[2]),
         unknowns(sys),
     )
     debug_info = Dict(
@@ -195,7 +195,7 @@ function construct_optimization_problem(
     # So I substitute it right away, so OptimizationProblem does not know there are parameters.
     # This is only for the oracle case.
     # And we only have the oracle case for canonical moments.
-    paramsdefs_map = Dict(k => ModelingToolkit.getdefault(k) for k in ouq_sys.parameters)
+    paramsdefs_map = Dict(k => ModelingToolkitBase.getdefault(k) for k in ouq_sys.parameters)
     if !isa(parammap, SciMLBase.NullParameters)
         parammap = merge(paramsdefs_map, parammap)
     else
