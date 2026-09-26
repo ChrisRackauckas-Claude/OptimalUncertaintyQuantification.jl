@@ -1,18 +1,26 @@
 function get_raw_moment_order(equation::Union{Equation, Inequality}, random_var::Num)
-    remove_expectation_rule = @rule 𝔼(~f) => ~f
-    extract_moment_rule = @rule ^(~base, ~exponent) => ~exponent
-    combined_rule = Chain([remove_expectation_rule, extract_moment_rule])
-    _eq = Symbolics.simplify(equation; rewriter = combined_rule)
-    if Symbolics.wrap(_eq.lhs) === random_var
+    # Prefer TermInterface over SymbolicUtils rewrite rules: modern Symbolics
+    # stores powers/Consts in a shape the old `@rule 𝔼(~f) => …` chain no longer
+    # reduces to a plain Int.
+    lhs = Symbolics.value(equation.lhs)
+    iscall(lhs) && operation(lhs) isa 𝔼_ || error(
+        "Equation $(equation) is not a raw moment equation of the form: 𝔼(Q^n) ~ <Float64> where n is an Integer",
+    )
+    f = only(arguments(lhs))
+    rv = Symbolics.value(random_var)
+    if isequal(f, rv)
         return 1
     end
-    order = _eq.lhs
-    if !isa(order, Int64)
-        error(
+    if iscall(f) && operation(f) === (^)
+        base, exp = arguments(f)
+        isequal(base, rv) || error(
             "Equation $(equation) is not a raw moment equation of the form: 𝔼(Q^n) ~ <Float64> where n is an Integer",
         )
+        return Int(Symbolics.value(exp))
     end
-    return order
+    return error(
+        "Equation $(equation) is not a raw moment equation of the form: 𝔼(Q^n) ~ <Float64> where n is an Integer",
+    )
 end
 
 function build_raw_moment_sequence(
@@ -22,7 +30,9 @@ function build_raw_moment_sequence(
     num_group_cons = length(constraints)
     raw_moment_sequence = fill(NaN, num_group_cons)
     for (i, constraint) in enumerate(constraints)
-        raw_moment_sequence[get_raw_moment_order(constraint, random_var)] = constraint.rhs
+        # Modern Symbolics stores numeric RHS as Const symbolics; unwrap to Float64.
+        rhs = Symbolics.value(constraint.rhs)
+        raw_moment_sequence[get_raw_moment_order(constraint, random_var)] = Float64(rhs)
     end
     !any(isnan, raw_moment_sequence) || error("Raw moments have holes")
     lb, ub = getbounds(random_var)
