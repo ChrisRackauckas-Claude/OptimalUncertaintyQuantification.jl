@@ -17,6 +17,18 @@ function simple_real_roots(P::AbstractPolynomial, root_solver, args...; kwargs..
 end
 
 
+"""
+    quadratic_eq_sridhare(coeffs)
+
+Closed-form roots of a quadratic ``a x^2 + b x + c = 0`` via the classical
+quadratic formula (Sridhara / Bhaskara form).
+
+# Arguments
+- `coeffs`: Length-3 coefficient vector `[c, b, a]` in ascending monomial order.
+
+# Returns
+- A length-2 vector of the two roots.
+"""
 function quadratic_eq_sridhare(coeffs)
     @assert length(coeffs) == 3
     c, b, a = coeffs
@@ -26,6 +38,18 @@ function quadratic_eq_sridhare(coeffs)
     return X
 end
 
+"""
+    quadratic_eq_fagnano(coeffs)
+
+Closed-form roots of a quadratic using Fagnano's reciprocal form, which can be
+more numerically stable when `|c|` is small relative to `|a|`.
+
+# Arguments
+- `coeffs`: Length-3 coefficient vector `[c, b, a]` in ascending monomial order.
+
+# Returns
+- A length-2 vector of the two roots.
+"""
 function quadratic_eq_fagnano(coeffs)
     @assert length(coeffs) == 3
     c, b, a = coeffs
@@ -35,6 +59,18 @@ function quadratic_eq_fagnano(coeffs)
     return X
 end
 
+"""
+    quadratic_eq_fagnano_mod(coeffs)
+
+Closed-form roots of a quadratic using a modified Fagnano expression that factors
+the discriminant relative to ``b^2``, useful when ``|b|`` dominates.
+
+# Arguments
+- `coeffs`: Length-3 coefficient vector `[c, b, a]` in ascending monomial order.
+
+# Returns
+- A length-2 vector of the two roots.
+"""
 function quadratic_eq_fagnano_mod(coeffs)
     @assert length(coeffs) == 3
     c, b, a = coeffs
