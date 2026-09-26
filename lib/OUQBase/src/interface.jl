@@ -1,15 +1,23 @@
 """
     @random_variables begin
-        Independent(X, bounds = (lo, hi))
-        Independent([Y, Z], bounds = ((ylo, yhi), (zlo, zhi)))
+        Independent(X, bounds = (0.0, 1.0))
+        Independent([Y, Z], bounds = ((2.0, 3.0), (4.0, 5.0)))
     end
 
 Declare independent random-variable groups for an [`AdmissibleSet`](@ref).
 
 Each line must be `Independent(...)`. A single symbol creates a univariate group;
 a vector of symbols creates a jointly dependent group whose members share one
-discrete measure. Bounds are required for every variable. The macro expands to
-`Symbolics.@variables` in the caller's scope and returns an
+discrete measure. Bounds are required for every variable.
+
+For a scalar `Independent(X, bounds = (a, b))`, `a` and `b` must be numeric
+literals (or other AST literals). The scalar form splices the bound AST into
+`Symbolics.@variables` without evaluating caller bindings, so
+`bounds = (lo, hi)` with `lo, hi = 0.0, 1.0` stores `(:lo, :hi)` rather than
+`(0.0, 1.0)`. Bound expressions in the multivariable form are evaluated in the
+caller.
+
+The macro expands to `Symbolics.@variables` in the caller's scope and returns an
 `OrderedDict{Symbol, Union{Num, Vector{Num}}}` suitable for
 `AdmissibleSet(rand_vars, constraints)`.
 """

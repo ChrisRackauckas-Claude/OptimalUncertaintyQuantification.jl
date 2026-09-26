@@ -49,3 +49,14 @@ run_qa(
         @test name in names(OptimalUncertaintyQuantification)
     end
 end
+
+@testset "@random_variables scalar bounds are numeric literals" begin
+    # Guard the documented scalar example: named bounds are stored as symbols.
+    rv = @random_variables begin
+        Independent(X, bounds = (0.0, 1.0))
+        Independent([Y, Z], bounds = ((2.0, 3.0), (4.0, 5.0)))
+    end
+    @test OUQBase.getbounds(rv[:_X]) == (0.0, 1.0)
+    @test OUQBase.getbounds(rv[:_YZ][1]) == (2.0, 3.0)
+    @test OUQBase.getbounds(rv[:_YZ][2]) == (4.0, 5.0)
+end
