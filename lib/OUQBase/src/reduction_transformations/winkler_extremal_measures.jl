@@ -373,7 +373,9 @@ function construct_optimization_problem(
     objective = ouq_sys.objective
     @debug "Objective: $(objective._obj)"
     extract_condition_rule = @rule ℙ(~condition) => ~condition
-    condition = Symbolics.simplify(objective._obj; rewriter = extract_condition_rule)
+    condition = boolean_probability_event(
+        Symbolics.simplify(objective._obj; rewriter = extract_condition_rule),
+    )
     _discrete_measure_map =
         discrete_measure_map(ouq_sys, ouq_sys.reduction_data, oracle_or_symbolic)
     group_names, constituent_random_variables, induced_discrete_measure =

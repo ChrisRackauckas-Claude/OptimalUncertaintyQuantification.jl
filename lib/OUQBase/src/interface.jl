@@ -247,6 +247,24 @@ function _unwrap_ouq_vars(v)
     end
 end
 
+# `≲` / `≳` build a Symbolics.Inequality constraint object, not a Bool comparison.
+# Symbolics.evaluate leaves those as unfolded `isless(...)` when the opposite side
+# is a non-literal expression. Map to `lhs <= rhs` / `lhs >= rhs` before evaluate
+# so probability events become Bool.
+function boolean_probability_event(expr)
+    v = Symbolics.value(expr)
+    if v isa Inequality
+        if v.relational_op === Symbolics.leq
+            return v.lhs <= v.rhs
+        elseif v.relational_op === Symbolics.geq
+            return v.lhs >= v.rhs
+        else
+            error("Unsupported Inequality relational_op $(v.relational_op) in $expr")
+        end
+    end
+    return expr
+end
+
 function get_ordered_group_names(
         expression,
         admissible_set::AdmissibleSet;
