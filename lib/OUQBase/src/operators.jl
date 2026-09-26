@@ -1,5 +1,7 @@
-import Symbolics: Operator, value
-import SymbolicUtils: Term, symtype
+# `Operator` is owned by SymbolicUtils (Symbolics reexports it); import from the owner
+# so ExplicitImports' via-owners check passes.
+import SymbolicUtils: Operator, Term, symtype
+import Symbolics: value
 
 """
     𝔼_
