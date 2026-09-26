@@ -50,3 +50,20 @@ end
     @test isequal(OUQBase.underlying_random_variables(ℙ(Q ≲ 0.5)), [Symbolics.value(Q)])
     @test OUQBase.get_ordered_group_names(ℙ(Q ≲ 0.5), aset) == [:_Q]
 end
+
+# Call-shaped / indexed / differential leaves: get_variables returns the leaf
+# itself; unwrap must not recurse forever or replace z(t)/a[1] with t/the array.
+@testset "call-valued random variables" begin
+    using OrderedCollections: OrderedDict
+    @variables t z(t) a[1:2]
+    for x in (z, a[1], Differential(t)(z))
+        aset = AdmissibleSet(
+            OrderedDict{Symbol, Union{Num, Vector{Num}}}(:_x => x), [],
+        )
+        @test OUQBase.get_ordered_group_names(x, aset) == [:_x]
+        @test isequal(only(OUQBase.underlying_random_variables(x)), Symbolics.value(x))
+        @test isequal(
+            only(OUQBase.underlying_random_variables(𝔼(x) ~ 0.5)), Symbolics.value(x)
+        )
+    end
+end

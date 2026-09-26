@@ -230,8 +230,15 @@ function _unwrap_ouq_vars(v)
             end
             return unique(result)
         end
+        # Atomic call-shaped leaves (z(t), a[1], Differential(t)(z)): get_variables
+        # returns the input itself. Stop recursion so we keep that leaf identity
+        # instead of overflowing or replacing it with t / the parent array.
+        inners = get_variables(v)
+        if length(inners) == 1 && isequal(only(inners), v)
+            return Any[v]
+        end
         result = Any[]
-        for inner in get_variables(v)
+        for inner in inners
             append!(result, _unwrap_ouq_vars(inner))
         end
         return unique(isempty(result) ? Any[v] : result)
