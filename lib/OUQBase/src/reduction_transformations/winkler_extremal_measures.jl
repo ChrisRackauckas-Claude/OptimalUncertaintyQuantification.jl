@@ -5,9 +5,10 @@ function convert_inequality_to_jump_leq_lhs(
         complement = false,
         tol = 1.0e-10,
     )
-    if ineq.relational_op == Symbolics.leq
+    # Discriminate leq/geq via public constructors' `.relational_op` (not Symbolics.leq/geq).
+    if ineq.relational_op == (ineq.lhs ≲ ineq.rhs).relational_op
         jump_leq_lhs = complement ? ineq.rhs - ineq.lhs + tol : ineq.lhs - ineq.rhs
-    elseif ineq.relational_op == Symbolics.geq
+    elseif ineq.relational_op == (ineq.lhs ≳ ineq.rhs).relational_op
         jump_leq_lhs = complement ? ineq.lhs - ineq.rhs - tol : ineq.rhs - ineq.lhs
     else
         error("Unsupported inequality: $ineq")

@@ -251,12 +251,13 @@ end
 # Symbolics.evaluate leaves those as unfolded `isless(...)` when the opposite side
 # is a non-literal expression. Map to `lhs <= rhs` / `lhs >= rhs` before evaluate
 # so probability events become Bool.
+# Discriminate leq/geq via public constructors' `.relational_op` (not Symbolics.leq/geq).
 function boolean_probability_event(expr)
     v = Symbolics.value(expr)
     if v isa Inequality
-        if v.relational_op === Symbolics.leq
+        if v.relational_op === (v.lhs ≲ v.rhs).relational_op
             return v.lhs <= v.rhs
-        elseif v.relational_op === Symbolics.geq
+        elseif v.relational_op === (v.lhs ≳ v.rhs).relational_op
             return v.lhs >= v.rhs
         else
             error("Unsupported Inequality relational_op $(v.relational_op) in $expr")
