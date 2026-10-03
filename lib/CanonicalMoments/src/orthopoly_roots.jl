@@ -17,6 +17,22 @@ function simple_real_roots(P::AbstractPolynomial, root_solver, args...; kwargs..
 end
 
 
+"""
+    quadratic_eq_sridhare(coeffs)
+
+Closed-form roots of a quadratic ``a x^2 + b x + c = 0`` using
+``x = \\bigl(-b \\pm \\sqrt{b^2 - 4ac}\\bigr) / (2a)``.
+
+Like the other closed forms in this file, when ``b^2 \\gg |4ac|`` one of the
+two roots loses precision to cancellation; none of these forms is uniformly
+more accurate than the others for both roots.
+
+# Arguments
+- `coeffs`: Length-3 coefficient vector `[c, b, a]` in ascending monomial order.
+
+# Returns
+- A length-2 vector of the two roots.
+"""
 function quadratic_eq_sridhare(coeffs)
     @assert length(coeffs) == 3
     c, b, a = coeffs
@@ -26,6 +42,22 @@ function quadratic_eq_sridhare(coeffs)
     return X
 end
 
+"""
+    quadratic_eq_fagnano(coeffs)
+
+Closed-form roots of a quadratic ``a x^2 + b x + c = 0`` using Fagnano's
+reciprocal form ``x = 2c / \\bigl(-b \\pm \\sqrt{b^2 - 4ac}\\bigr)``.
+
+This swaps which root is accurate relative to [`quadratic_eq_sridhare`](@ref):
+when ``b^2 \\gg |4ac|`` each closed form loses precision on exactly one root,
+and none is uniformly more stable for both.
+
+# Arguments
+- `coeffs`: Length-3 coefficient vector `[c, b, a]` in ascending monomial order.
+
+# Returns
+- A length-2 vector of the two roots.
+"""
 function quadratic_eq_fagnano(coeffs)
     @assert length(coeffs) == 3
     c, b, a = coeffs
@@ -35,6 +67,23 @@ function quadratic_eq_fagnano(coeffs)
     return X
 end
 
+"""
+    quadratic_eq_fagnano_mod(coeffs)
+
+Closed-form roots of a quadratic ``a x^2 + b x + c = 0`` using a modified
+Fagnano expression that factors the discriminant relative to ``b^2``:
+``x = 2c / \\bigl(-b\\,(1 \\pm \\sqrt{1 - 4ac/b^2})\\bigr)``.
+
+As with the other closed forms here, when ``b^2 \\gg |4ac|`` one root loses
+precision; none is uniformly more stable for both roots. This form is
+undefined when ``b = 0`` (returns `NaN`).
+
+# Arguments
+- `coeffs`: Length-3 coefficient vector `[c, b, a]` in ascending monomial order.
+
+# Returns
+- A length-2 vector of the two roots.
+"""
 function quadratic_eq_fagnano_mod(coeffs)
     @assert length(coeffs) == 3
     c, b, a = coeffs

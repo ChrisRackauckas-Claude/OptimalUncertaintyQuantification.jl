@@ -2,6 +2,9 @@ module OptimalUncertaintyQuantification
 
 using Reexport: @reexport
 @reexport using OUQBase
+# Precompile workload uses the macro by name; ExplicitImports requires an
+# explicit import even though `@reexport using OUQBase` already exports it.
+using OUQBase: @random_variables
 # `@random_variables` expands to `Symbolics.@variables` in the caller scope.
 import Symbolics
 
