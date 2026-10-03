@@ -1,8 +1,23 @@
-import Symbolics: Operator, value
-import SymbolicUtils: Term, symtype
+# `Operator` is owned by SymbolicUtils (Symbolics reexports it); import from the owner
+# so ExplicitImports' via-owners check passes.
+import SymbolicUtils: Operator, Term, symtype
+import Symbolics: value
 
+"""
+    𝔼_
+
+Operator type behind the expectation functor [`𝔼`](@ref). Exported so pretty-printing
+and dispatch can refer to the concrete operator type rather than the singleton value.
+"""
 struct 𝔼_ <: Operator end
 
+"""
+    𝔼
+
+Expectation operator for quantities of interest in an OUQ problem. Applied to a symbolic
+expression `f(X)`, `𝔼(f(X))` builds a symbolic expectation that is later reduced to a
+finite optimization problem over an admissible set of measures.
+"""
 const 𝔼 = 𝔼_() # To get same object
 
 (::𝔼_)(x) = Term{symtype(x)}(𝔼, Any[x])
@@ -26,6 +41,13 @@ end
 
 struct ℙ_ <: Operator end
 
+"""
+    ℙ
+
+Probability operator for event indicators in an OUQ problem. Applied to a relational
+expression such as `H ≳ h`, `ℙ(H ≳ h)` builds a symbolic probability that is later
+reduced to a finite optimization problem over an admissible set of measures.
+"""
 const ℙ = ℙ_() # To get same object
 
 (::ℙ_)(x) = Term{symtype(x)}(ℙ, Any[x])
