@@ -1,10 +1,10 @@
 module OUQBase
 using ModelingToolkit: ModelingToolkit, @named, OptimizationSystem, get_variables,
     getbounds, parameters, structural_simplify, unknowns
+using ModelingToolkitBase: ModelingToolkitBase
 using Symbolics: Symbolics, Equation, Inequality, Num, wrap
 using SymbolicUtils: SymbolicUtils, BasicSymbolic, @rule, substitute
-using SymbolicUtils.Rewriters: Chain
-using TermInterface: arguments
+using TermInterface: arguments, iscall, operation
 using OrderedCollections: OrderedCollections, OrderedDict
 using DiscreteMeasures: DiscreteMeasures, DiscreteMeasure, ProductDiscreteMeasure,
     expectation, support, weights

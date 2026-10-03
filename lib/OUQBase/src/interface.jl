@@ -301,6 +301,50 @@ function get_group_name(var, ouq_sys::OUQSystem)
     return get_group_name(var, ouq_sys.admissible_set)
 end
 
+# Symbolics treats Operator applications as variable leaves, so
+# `get_variables(𝔼(Q) ~ c)` / `get_variables(ℙ(Q ≳ c))` yield the operator
+# term itself. Descend into 𝔼/ℙ arguments — including Inequality/Equation
+# wrappers used by ≳/≲ — and collect the underlying random variables.
+function underlying_random_variables(expression)
+    vars = Any[]
+    for v in get_variables(expression)
+        append!(vars, _unwrap_ouq_vars(v))
+    end
+    return unique(vars)
+end
+
+function _unwrap_ouq_vars(v)
+    v = Symbolics.value(v)
+    if v isa Number
+        return Any[]
+    elseif v isa Union{Equation, Inequality}
+        return unique(vcat(_unwrap_ouq_vars(v.lhs), _unwrap_ouq_vars(v.rhs)))
+    elseif iscall(v)
+        op = operation(v)
+        if op isa 𝔼_ || op isa ℙ_
+            result = Any[]
+            for arg in arguments(v)
+                append!(result, _unwrap_ouq_vars(arg))
+            end
+            return unique(result)
+        end
+        # Atomic call-shaped leaves (z(t), a[1], Differential(t)(z)): get_variables
+        # returns the input itself. Stop recursion so we keep that leaf identity
+        # instead of overflowing or replacing it with t / the parent array.
+        inners = get_variables(v)
+        if length(inners) == 1 && isequal(only(inners), v)
+            return Any[v]
+        end
+        result = Any[]
+        for inner in inners
+            append!(result, _unwrap_ouq_vars(inner))
+        end
+        return unique(isempty(result) ? Any[v] : result)
+    else
+        return Any[v]
+    end
+end
+
 function get_ordered_group_names(
         expression,
         admissible_set::AdmissibleSet;
@@ -308,11 +352,11 @@ function get_ordered_group_names(
         ensure_all = false,
     )
     if ensure_singleton
-        vars = get_variables(expression)
+        vars = underlying_random_variables(expression)
         @assert length(vars) == 1 "Expression $expression has multiple random variables $vars. Disable `ensure_singleton` if this is intended."
         return unique([get_group_name(only(vars), admissible_set)])
     else
-        vars = get_variables(expression)
+        vars = underlying_random_variables(expression)
         @debug "Expression $expression has multiple random variables $vars"
         unordered_group_names = Set([get_group_name(var, admissible_set) for var in vars])
         if ensure_all

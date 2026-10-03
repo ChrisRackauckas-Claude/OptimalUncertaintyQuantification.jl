@@ -1,18 +1,30 @@
 function get_raw_moment_order(equation::Union{Equation, Inequality}, random_var::Num)
-    remove_expectation_rule = @rule 𝔼(~f) => ~f
-    extract_moment_rule = @rule ^(~base, ~exponent) => ~exponent
-    combined_rule = Chain([remove_expectation_rule, extract_moment_rule])
-    _eq = Symbolics.simplify(equation; rewriter = combined_rule)
-    if Symbolics.wrap(_eq.lhs) === random_var
+    # 𝔼(Q) / 𝔼(Q^n) ~ c: read order from the TermInterface structure of the LHS
+    # (plain variable ⇒ 1; power ⇒ integer exponent). Const-wrapped numerics are
+    # unwrapped via Symbolics.value.
+    lhs = Symbolics.value(equation.lhs)
+    iscall(lhs) && operation(lhs) isa 𝔼_ || error(
+        "Equation $(equation) is not a raw moment equation of the form: 𝔼(Q^n) ~ <Float64> where n is an Integer",
+    )
+    f = only(arguments(lhs))
+    rv = Symbolics.value(random_var)
+    if isequal(f, rv)
         return 1
     end
-    order = _eq.lhs
-    if !isa(order, Int64)
-        error(
+    if iscall(f) && operation(f) === (^)
+        base, exp = arguments(f)
+        isequal(base, rv) || error(
             "Equation $(equation) is not a raw moment equation of the form: 𝔼(Q^n) ~ <Float64> where n is an Integer",
         )
+        n = Symbolics.value(exp)
+        (n isa Number && isinteger(n)) || error(
+            "Equation $(equation) is not a raw moment equation of the form: 𝔼(Q^n) ~ <Float64> where n is an Integer",
+        )
+        return Int(n)
     end
-    return order
+    return error(
+        "Equation $(equation) is not a raw moment equation of the form: 𝔼(Q^n) ~ <Float64> where n is an Integer",
+    )
 end
 
 function build_raw_moment_sequence(
@@ -22,7 +34,9 @@ function build_raw_moment_sequence(
     num_group_cons = length(constraints)
     raw_moment_sequence = fill(NaN, num_group_cons)
     for (i, constraint) in enumerate(constraints)
-        raw_moment_sequence[get_raw_moment_order(constraint, random_var)] = constraint.rhs
+        # Numeric RHS may be a Const symbolic; coerce to Float64 for the sequence.
+        rhs = Symbolics.value(constraint.rhs)
+        raw_moment_sequence[get_raw_moment_order(constraint, random_var)] = Float64(rhs)
     end
     !any(isnan, raw_moment_sequence) || error("Raw moments have holes")
     lb, ub = getbounds(random_var)
@@ -134,7 +148,7 @@ function construct_optimization_problem(
         OptimizationSystem(reduced_objective, p_frees_vec, ouq_sys.parameters; kwargs...)
     sys = structural_simplify(opt_sys)
     u0_map = map(
-        v -> 0.5 * (ModelingToolkit.getbounds(v)[1] .+ ModelingToolkit.getbounds(v)[2]),
+        v -> 0.5 * (ModelingToolkitBase.getbounds(v)[1] .+ ModelingToolkitBase.getbounds(v)[2]),
         unknowns(sys),
     )
     debug_info = Dict(
@@ -181,7 +195,7 @@ function construct_optimization_problem(
     # So I substitute it right away, so OptimizationProblem does not know there are parameters.
     # This is only for the oracle case.
     # And we only have the oracle case for canonical moments.
-    paramsdefs_map = Dict(k => ModelingToolkit.getdefault(k) for k in ouq_sys.parameters)
+    paramsdefs_map = Dict(k => ModelingToolkitBase.getdefault(k) for k in ouq_sys.parameters)
     if !isa(parammap, SciMLBase.NullParameters)
         parammap = merge(paramsdefs_map, parammap)
     else

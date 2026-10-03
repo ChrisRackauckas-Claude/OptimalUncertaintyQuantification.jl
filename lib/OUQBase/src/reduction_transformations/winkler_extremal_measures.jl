@@ -425,7 +425,7 @@ function construct_optimization_problem(
 
     _symbolic_decision_vars = extract_decision_vars(_discrete_measure_map)
     u0_map = map(
-        v -> 0.5 * (ModelingToolkit.getbounds(v)[1] .+ ModelingToolkit.getbounds(v)[2]),
+        v -> 0.5 * (ModelingToolkitBase.getbounds(v)[1] .+ ModelingToolkitBase.getbounds(v)[2]),
         _symbolic_decision_vars,
     )
 

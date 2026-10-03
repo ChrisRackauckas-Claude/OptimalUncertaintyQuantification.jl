@@ -16,20 +16,20 @@ run_qa(
         # Explicit imports of names that are non-public in the upstream majors OUQBase
         # actually resolves (public declarations landed in later majors that [compat]
         # excludes).
-        #   :BasicSymbolic/:Term/:symtype/:Operator - SymbolicUtils
-        #   :value                                  - Symbolics
+        #   :BasicSymbolic/:Operator/:term - SymbolicUtils
+        #   :value                         - Symbolics
         all_explicit_imports_are_public = (;
-            ignore = (:BasicSymbolic, :Operator, :Term, :symtype, :value),
+            ignore = (:BasicSymbolic, :Operator, :term, :value),
         ),
         # Non-public qualified accesses into upstream packages; still non-public in the
         # resolved upstream majors:
         #   :BasicSymbolic/:isbinop/:promote_symtype - SymbolicUtils
         #   :evaluate/:geq/:leq                      - Symbolics
-        #   :getdefault                              - ModelingToolkit
         #   :NoAD/:NullParameters                    - SciMLBase
+        # getdefault is accessed via its owner ModelingToolkitBase (public there).
         all_qualified_accesses_are_public = (;
             ignore = (
-                :BasicSymbolic, :NoAD, :NullParameters, :evaluate, :geq, :getdefault,
+                :BasicSymbolic, :NoAD, :NullParameters, :evaluate, :geq,
                 :isbinop, :leq, :promote_symtype,
             ),
         ),
