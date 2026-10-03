@@ -1,3 +1,26 @@
+"""
+    @random_variables begin
+        Independent(X, bounds = (0.0, 1.0))
+        Independent([Y, Z], bounds = ((2.0, 3.0), (4.0, 5.0)))
+    end
+
+Declare independent random-variable groups for an [`AdmissibleSet`](@ref).
+
+Each line must be `Independent(...)`. A single symbol creates a univariate group;
+a vector of symbols creates a jointly dependent group whose members share one
+discrete measure. Bounds are required for every variable.
+
+For a scalar `Independent(X, bounds = (a, b))`, `a` and `b` must be numeric
+literals (or other AST literals). The scalar form splices the bound AST into
+`Symbolics.@variables` without evaluating caller bindings, so
+`bounds = (lo, hi)` with `lo, hi = 0.0, 1.0` stores `(:lo, :hi)` rather than
+`(0.0, 1.0)`. Bound expressions in the multivariable form are evaluated in the
+caller.
+
+The macro expands to `Symbolics.@variables` in the caller's scope and returns an
+`OrderedDict{Symbol, Union{Num, Vector{Num}}}` suitable for
+`AdmissibleSet(rand_vars, constraints)`.
+"""
 macro random_variables(block)
     lines = block isa Expr && block.head === :block ? block.args : [block]
     Base.remove_linenums!(block)
@@ -62,6 +85,18 @@ function _build_independent_expr(line::Expr)
 end
 
 abstract type AbstractAdmissibleSet end
+
+"""
+    AdmissibleSet(random_variable_map, constraints)
+
+The set ``\\mathcal{A}`` of probability measures consistent with known information.
+
+# Arguments
+- `random_variable_map`: Groups of random variables from [`@random_variables`](@ref),
+  keyed by a generated group symbol.
+- `constraints`: Moment or other information constraints (typically involving
+  [`𝔼`](@ref) / [`ℙ`](@ref)) that every measure in ``\\mathcal{A}`` must satisfy.
+"""
 struct AdmissibleSet <: AbstractAdmissibleSet
     random_variable_map::OrderedDict{Symbol, Union{Num, Vector{Num}}}
     constraints::Vector{Union{Equation, Inequality}} # A: Yes, all constraints are accepted here. QN: Are constraints containing multiple random variables allowed?
@@ -76,6 +111,15 @@ end
 abstract type AbstractReductionAlgorithm end
 # Subtypes of AbstractReductionAlgorithm are duck typed
 
+"""
+    WinklerExtremalMeasures(; constraints_map = OrderedDict())
+
+Reduction algorithm that replaces each independent group by a discrete extremal
+measure (Winkler / finite-support reduction) before building the optimization problem.
+
+When constructed as a keyword for [`OUQSystem`](@ref), leave `constraints_map` empty;
+it is filled from the [`AdmissibleSet`](@ref) during system construction.
+"""
 struct WinklerExtremalMeasures <: AbstractReductionAlgorithm
     constraints_map::OrderedDict{Symbol, Vector{Union{Equation, Inequality}}}
     function WinklerExtremalMeasures(;
@@ -85,6 +129,22 @@ struct WinklerExtremalMeasures <: AbstractReductionAlgorithm
     end
 end
 
+"""
+    StengerCanonicalMoments(; constraints_map = OrderedDict(),
+                              raw_moments_map = OrderedDict(),
+                              p_free_map = OrderedDict(),
+                              support_alg = EigvalSupportAlg(),
+                              weight_alg = EigvecWeightAlg())
+
+Canonical-moment (Stenger) reduction: encode moment information as canonical
+moments and recover discrete measures via CanonicalMoments support and weight
+algorithms.
+
+Keyword maps are populated during [`OUQSystem`](@ref) construction when this type
+is passed as `reduction_alg`. `support_alg` / `weight_alg` select how nodes and
+weights are computed (defaults: [`EigvalSupportAlg`](@ref) /
+[`EigvecWeightAlg`](@ref); polynomial-based options are also available).
+"""
 struct StengerCanonicalMoments <: AbstractReductionAlgorithm
     constraints_map::OrderedDict{Symbol, Vector{Union{Equation, Inequality}}}
     raw_moments_map::OrderedDict{Symbol, RawMomentSequence}
@@ -142,6 +202,18 @@ function process_objective(objective::Union{Num, SymbolicUtils.BasicSymbolic})
 end
 
 abstract type AbstractOUQSystem end
+
+"""
+    OUQSystem(; objective, admissible_set, reduction_alg, parameters = NullParameters())
+
+Assemble an Optimal Uncertainty Quantification system from an objective
+([`𝔼`](@ref) / [`ℙ`](@ref) expression), an [`AdmissibleSet`](@ref), and a reduction
+algorithm such as [`WinklerExtremalMeasures`](@ref) or
+[`StengerCanonicalMoments`](@ref).
+
+The constructor populates reduction data (per-group constraints, moment maps, …)
+and returns a typed `OUQSystem` ready for [`OUQProblem`](@ref).
+"""
 struct OUQSystem{A <: ObjectiveType, B <: AbstractReductionAlgorithm, P} <: AbstractOUQSystem
     objective::A
     admissible_set::AdmissibleSet
@@ -179,13 +251,39 @@ function _OUQSystem(
 end
 
 objective(ouq_sys::OUQSystem) = ouq_sys.objective
+
+"""
+    random_variable_map(ouq_sys::OUQSystem)
+
+Return the random-variable group map stored on `ouq_sys.admissible_set`.
+"""
 random_variable_map(ouq_sys::OUQSystem) = ouq_sys.admissible_set.random_variable_map
+
+"""
+    constraints_map(ouq_sys::OUQSystem)
+
+Return the per-group information constraints produced by the reduction algorithm.
+"""
 constraints_map(ouq_sys::OUQSystem) = ouq_sys.reduction_data.constraints_map
 # Dispatch on the (concretely typed) reduction_data so the accessors stay type
 # stable: a StengerCanonicalMoments system returns its dict, anything else nothing.
+
+"""
+    raw_moments_map(ouq_sys::OUQSystem)
+
+Return the per-group raw moment sequences for a canonical-moment reduction, or
+`nothing` when the reduction algorithm does not use them.
+"""
 raw_moments_map(ouq_sys::OUQSystem) = raw_moments_map(ouq_sys.reduction_data)
 raw_moments_map(reduction_data::StengerCanonicalMoments) = reduction_data.raw_moments_map
 raw_moments_map(::AbstractReductionAlgorithm) = nothing
+
+"""
+    p_free_map(ouq_sys::OUQSystem)
+
+Return the per-group free canonical-moment parameters for a
+[`StengerCanonicalMoments`](@ref) reduction, or `nothing` otherwise.
+"""
 p_free_map(ouq_sys::OUQSystem) = p_free_map(ouq_sys.reduction_data)
 p_free_map(reduction_data::StengerCanonicalMoments) = reduction_data.p_free_map
 p_free_map(::AbstractReductionAlgorithm) = nothing
@@ -298,17 +396,55 @@ end
 
 # Contains the reduced OUQ Problem
 abstract type AbstractOUQProblem end
+
+"""
+    OUQProblem(optim_model, debug_info)
+    OUQProblem(ouq_sys, optimization_language, oracle_or_symbolic; parammap, kwargs...)
+
+A reduced OUQ problem ready for a numerical solver.
+
+The three-argument constructor builds an optimization model from an
+[`OUQSystem`](@ref) using a backend tag ([`JuMPModel`](@ref) or
+[`OptimizationModel`](@ref)) and either [`Oracle`](@ref) or [`Symbolic`](@ref)
+evaluation of the quantity of interest.
+"""
 struct OUQProblem <: AbstractOUQProblem
     optim_model::Union{OptimizationProblem, JuMP.GenericModel{Float64}}
     debug_info::Dict{Symbol, Any}
 end
 
 abstract type AbstractOptimizationLanguage end
+
+"""
+    JuMPModel()
+
+Backend tag: build the reduced OUQ program as a JuMP model.
+"""
 struct JuMPModel <: AbstractOptimizationLanguage end
+
+"""
+    OptimizationModel()
+
+Backend tag: build the reduced OUQ program as a SciML `OptimizationProblem`.
+"""
 struct OptimizationModel <: AbstractOptimizationLanguage end
 
 abstract type OracleOrSymbolic end
+
+"""
+    Oracle()
+
+Evaluation mode that treats the quantity of interest as an oracle (black-box /
+numerically evaluated) when constructing the reduced problem.
+"""
 struct Oracle <: OracleOrSymbolic end
+
+"""
+    Symbolic()
+
+Evaluation mode that keeps the quantity of interest symbolic when constructing
+the reduced problem (integrals expanded against discrete measures symbolically).
+"""
 struct Symbolic <: OracleOrSymbolic end
 
 function OUQProblem(

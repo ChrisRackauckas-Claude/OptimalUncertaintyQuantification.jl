@@ -1,19 +1,25 @@
 using SciMLTesting, OUQBase, JET, Test
 
+# CanonicalMoments algorithms reexported so OUQBase users need not depend on
+# CanonicalMoments directly; documented at CanonicalMoments.
+const CANONICAL_MOMENTS_REEXPORTS = (
+    :EigvalSupportAlg,
+    :EigvecWeightAlg,
+    :PolyRootsSupportAlg,
+    :PolyWeightAlg,
+)
+
 run_qa(
     OUQBase;
     explicit_imports = true,
     ei_kwargs = (;
         # Explicit imports of names that are non-public in the upstream majors OUQBase
-        # actually resolves. OUQBase's [compat] caps SciMLBase 2.x / Symbolics 6.x /
-        # SymbolicUtils 3.x / ModelingToolkit 9.x, where these are not `public`-declared
-        # (the public declarations only landed in later majors that [compat] excludes;
-        # verified against the registered releases on Julia 1.12: Symbolics 6.58.0 /
-        # SymbolicUtils 3.32.0).
-        #   :BasicSymbolic/:Operator/:Term/:symtype - SymbolicUtils
-        #   :value                                  - Symbolics
+        # actually resolves (public declarations landed in later majors that [compat]
+        # excludes).
+        #   :BasicSymbolic/:Operator/:term - SymbolicUtils
+        #   :value                         - Symbolics
         all_explicit_imports_are_public = (;
-            ignore = (:BasicSymbolic, :Operator, :Term, :symtype, :value),
+            ignore = (:BasicSymbolic, :Operator, :term, :value),
         ),
         # Non-public qualified accesses into upstream packages; still non-public in the
         # resolved upstream majors:
@@ -28,4 +34,5 @@ run_qa(
             ),
         ),
     ),
+    reexports_allow = CANONICAL_MOMENTS_REEXPORTS,
 )
